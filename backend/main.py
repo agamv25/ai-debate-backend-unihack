@@ -1,17 +1,16 @@
 from fastapi import FastAPI
 import agent
 from pydantic import BaseModel
-from typing import Literal
 
 # Message list JSON fields
 class Message(BaseModel):
-    speaker: Literal["for", "against"]
+    speaker: str
     message: str
 
 # Main item JSON fields
 class Item(BaseModel):
     topic: str
-    speaker: float
+    speaker: str
     conversation: list[Message]
 
 # Setup app
