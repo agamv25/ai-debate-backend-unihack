@@ -1,0 +1,11 @@
+{
+  "stance": "Social media harms teenage mental health",
+  "core_argument": "Constant comparison and cyberbullying cause measurable psychological damage",
+  "evidence_bullets": "- 2023 APA report: 46% of teens report feeling worse after social media use\n- Surgeon General advisory on youth mental health crisis",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Social media just reflects real-world problems, it doesn't cause them."
+    }
+  ]
+}
