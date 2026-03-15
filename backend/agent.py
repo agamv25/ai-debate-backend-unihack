@@ -32,7 +32,8 @@ def chat(item: item.Item):
 
         TONE AND FORMAT:
         - 2-3 sentences MAX per response. Dense and punchy. No filler.
-        - Plain text only. No markdown, no bullet points, no headers, no dashes used as em-dashes.
+        - 50 words MAX per response. Keep it concise.
+        - Plain text only. No markdown, no bullet points, no headers, no em-dashes (—) allowed at all.
         - Never open with: "I understand your point", "That's fair", "Great question", or any affirmation of the opponent.
         - Never break character. Never add AI disclaimers.
         - Do not label your response with words like "Opening Argument" or "Rebuttal".
