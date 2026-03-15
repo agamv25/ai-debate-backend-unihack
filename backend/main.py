@@ -15,6 +15,7 @@ _cors_origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "http://localhost:
 
 app = FastAPI()
 
+# CORS: Allow requests from allowed domains from .env file
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
@@ -22,7 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+# Listen to POST requests sent to /message/, get AI response
 @app.post("/message/")
 def create_item(item: item.Item):
     response_message = agent.chat(item)
