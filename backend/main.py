@@ -12,11 +12,14 @@ from fact_checker import check_hallucinations
 
 _cors_origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",") if x.strip()]
 
+_cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000")
+_cors_origins_list = [o.strip() for o in _cors_origins.split(",") if o.strip()]
+
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_cors_origins,
+    allow_origins=_cors_origins_list,
     allow_methods=["*"],
     allow_headers=["*"],
 )
