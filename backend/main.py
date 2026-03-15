@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -8,18 +7,13 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 import agent
 import item
-from fact_checker import check_hallucinations 
-
-_cors_origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",") if x.strip()]
-
-_cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000")
-_cors_origins_list = [o.strip() for o in _cors_origins.split(",") if o.strip()]
+from fact_checker import check_hallucinations
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_cors_origins_list,
+    allow_origins=["http://localhost:3000", "https://aigument-frontend.vercel.app"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
