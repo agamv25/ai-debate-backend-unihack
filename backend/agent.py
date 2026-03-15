@@ -1,5 +1,6 @@
 import anthropic # type: ignore
 import json
+import item
 
 client = anthropic.Anthropic()
 
@@ -13,7 +14,7 @@ def decode_json(json_string: str) -> dict:
     return json.loads(json_string)
 
 # Claude tool from prompt
-def chat(debate_data):
+def chat(item: item.Item):
     # System prompt to guide Claude AI to follow certain rules
     system_prompt = """
         You are a skilled debater arguing different positions as given by the conviction in your prompt.
@@ -35,7 +36,7 @@ def chat(debate_data):
         TOPIC: "{topic}"
         STANCE: "{stance}"
         Previous Arguments: "{argument}"
-    """.format(topic=debate_data.get("topic"), stance=debate_data.get("speaker"), argument=debate_data.get("conversation"))
+    """.format(topic=item.topic, stance=item.speaker, argument=item.conversation)
     
     # Send full history with each request
     response = client.messages.create(
