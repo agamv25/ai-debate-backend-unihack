@@ -1,54 +1,76 @@
-import anthropic # type: ignore
+import anthropic 
 import json
 import item
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+from duckduckgo_search import DDGS
 
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 client = anthropic.Anthropic()
 
-# JSON Helper tools
-def encode_json(data: dict, pretty: bool = True) -> str:
-    """Convert a Python dict to a JSON string."""
-    return json.dumps(data, indent=2 if pretty else None)
-
-def decode_json(json_string: str) -> dict:
-    """Convert a JSON string back to a Python dict."""
-    return json.loads(json_string)
-
-# Claude tool from prompt
-def chat(item: item.Item):
-    # System prompt to guide Claude AI to follow certain rules
-    system_prompt = """
-        You are a skilled debater arguing different positions as given by the conviction in your prompt.
-
-        Rules you must follow:
-        1. Never concede a point without immediately pivoting to a counter.
-        2. Attack the weakest premise in your opponent's last argument, not their conclusion.
-        3. Back claims with scientific backing and evidence with a link to the source. If no evidence supports a claim, argue from logic and principle instead — never invent a source, statistic, or study.
-        4. Keep each response to 2-3 sentences MAX. Dense, punchy. No padding.
-        5. Never say "I understand your point" or "that's a fair argument."
-        6. Do NOT break character or add disclaimers about AI limitations.
-        7. If your opponent raises a point you cannot counter with evidence or sound logic, it is better to explicitly acknowledge the gap — "I don't have a strong answer to that" — than to fabricate a response. A debater who admits the limits of their knowledge is more credible than one who bluffs.
-        8. Do NOT use markdown or text formatting. Keep ALL responses in simple plain text.
-    """
-
-    # Actual data to pass into Claude AI to generate arguments
-    prompt = """
-        You are a skilled debater arguing the following position with conviction:
-        TOPIC: "{topic}"
-        STANCE: "{stance}"
-        Previous Arguments: "{argument}"
-    """.format(topic=item.topic, stance=item.speaker, argument=item.conversation)
+def extract_and_search(conversation: list) -> str:
+    if not conversation:
+        return "No prior arguments to search."
+    history_str = "\n".join([f"[{m.speaker.upper()}]: {m.message}" for m in conversation])
     
-    # Send full history with each request
+    try:
+        print("[SYSTEM] Running Lite-RAG search...")
+        query_resp = client.messages.create(
+            model="claude-haiku-4-5-20251001", 
+            max_tokens=20,
+            system="Read the debate history. Output ONLY a 3 to 5 word search query to verify the very last claim made. No quotes.",
+            messages=[{"role": "user", "content": history_str}]
+        )
+        search_query = query_resp.content[0].text.strip()
+        print(f"[SYSTEM] Searching internet for: '{search_query}'")
+        
+        results = DDGS().text(search_query, max_results=3)
+        return " ".join([res["body"] for res in results]) if results else "No internet data found."
+    except Exception as e:
+        print(f"[WARNING] Web search failed: {e}")
+        return "Live search unavailable."
+
+def chat(item_data: item.Item) -> str:
+    live_facts = extract_and_search(item_data.conversation)
+    history_str = "\n".join([f"[{m.speaker.upper()}]: {m.message}" for m in item_data.conversation])
+
+   
+    system_prompt = f"""
+        You are a skilled competitive debater. Your position will be given in the prompt.
+
+        CRITICAL: Here is live internet data regarding the topic or opponent's last point:
+        <live_data>{live_facts}</live_data>
+
+        ARGUMENT STRATEGY:
+        - Target the weakest premise using the <live_data> provided.
+        - Lead with your strongest counter first, then build evidence behind it.
+        - When your opponent pivots, acknowledge the pivot implicitly by addressing it directly — never let a shift go uncontested.
+        - If you cannot counter with evidence or sound logic, say exactly: "I don't have a strong counter to that." A debater who admits limits is more credible than one who bluffs.
+
+        EVIDENCE RULES:
+        - Back empirical claims with scientific backing from the <live_data>.
+        - If no evidence exists in the live data, argue explicitly from logic, precedent, or principle. Never invent a statistic, study, or source.
+        - Distinguish clearly between "the evidence shows..." and "logically, this follows because..."
+
+        TONE AND FORMAT:
+        - 2-3 sentences MAX per response. Dense and punchy. No filler.
+        - 50 words MAX per response. Keep it concise.
+        - Plain text only. No markdown, no bullet points, no headers, no em-dashes allowed at all.
+        - Never open with: "I understand your point", "That's fair", "Great question", or any affirmation of the opponent.
+        - Never break character. Never add AI disclaimers.
+        - Do not label your response with words like "Opening Argument" or "Rebuttal".
+    """
+    prompt = f"""
+        TOPIC: "{item_data.topic}"
+        STANCE: "{item_data.speaker}"
+        Previous Arguments: "{history_str}"
+    """
     response = client.messages.create(
-        model="claude-opus-4-5",
+        model="claude-sonnet-4-6",
         max_tokens=1024,
         system=system_prompt,
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
+        messages=[{"role": "user", "content": prompt}]
     )
-    
-    # Extract assistant reply
-    assistant_message = response.content[0].text
-    
-    return assistant_message
+    return response.content[0].text
