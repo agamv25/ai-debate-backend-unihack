@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -9,11 +10,14 @@ import item
 # Load .env from project root so it works when running from backend/
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
+# CORS: comma-separated origins, e.g. "http://localhost:3000,https://app.example.com"
+_cors_origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",") if x.strip()]
+
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )

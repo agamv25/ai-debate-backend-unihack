@@ -31,13 +31,18 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. API key (use a `.env` file)
-Add `.env` in the root directory and set:
+### 3. Environment variables (`.env` in project root)
+
+Add a `.env` file in the **project root** (parent of `backend/`) with:
+
 ```
 ANTHROPIC_API_KEY=your-api-key-here
+CORS_ORIGINS=http://localhost:3000
 ```
 
-The app loads this automatically via `python-dotenv`; do not commit `.env`.
+Optional: **CORS_ORIGINS** — Comma-separated allowed frontend origins (default: `http://localhost:3000`). For production, set e.g. `https://yourdomain.com`.
+
+The app loads these via `python-dotenv`. Do not commit `.env`.
 
 ## Run
 
